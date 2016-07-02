@@ -18,7 +18,7 @@ import java.util.List;
 
 /**
  * 作者：guofeng
- * ＊ 日期:16/7/1
+ * 日期:16/7/1
  */
 public class WUZhiQIView extends View {
     /**
@@ -60,18 +60,32 @@ public class WUZhiQIView extends View {
     /**
      * 当前是否白棋走
      */
-    private boolean isCurWhite;
+    private boolean isCurWhite = true;
+    /**
+     * 只要5个连续的就是赢了
+     */
+    private final int WIN_COUNT = 5;
+    /**
+     * 控制是否可以操作棋盘
+     */
+    private boolean canOperate = true;
+    /**
+     * 赢了回调接口
+     */
+    private OnWinCallBack winCallBack;
 
-    public WUZhiQIView(Context context) {
-        this(context, null);
+    public void setWinCallBack(OnWinCallBack winCallBack) {
+        this.winCallBack = winCallBack;
     }
 
+    /**
+     * 设置回调必须使用俩个参数的构造方法
+     *
+     * @param context
+     * @param attrs
+     */
     public WUZhiQIView(Context context, AttributeSet attrs) {
-        this(context, null, 0);
-    }
-
-    public WUZhiQIView(Context context, AttributeSet attrs, int defStyleAttr) {
-        super(context, attrs, defStyleAttr);
+        super(context, attrs);
         init();
     }
 
@@ -131,12 +145,24 @@ public class WUZhiQIView extends View {
         for (Point p : blackPiece) {
             canvas.drawBitmap(blackBitmap, p.getX(), p.getY(), paint);
         }
+        //监测白棋是否赢了
+        if (checkWin(whitePiece)) {
+            canOperate = false;
+            if (winCallBack != null) winCallBack.winListener(true);
+        }
+        //监测黑棋是否赢了
+        else if (checkWin(blackPiece)) {
+            canOperate = false;
+            if (winCallBack != null) winCallBack.winListener(false);
+        }
     }
 
     @Override
     public boolean onTouchEvent(MotionEvent event) {
         switch (event.getAction()) {
             case MotionEvent.ACTION_DOWN:
+                //当前棋盘不可操作
+                if (!canOperate) break;
                 int x = (int) event.getX();
                 int y = (int) event.getY();
                 int xCount = Math.round(x / halfLineHeight);
@@ -184,19 +210,176 @@ public class WUZhiQIView extends View {
         return false;
     }
 
-//    /**
-//     * 监测是否赢了
-//     *
-//     * @param list
-//     * @return
-//     */
-//    private boolean checkWin(List<Point> list) {
-//        int winSize = 5;
-//        int size = list.size();
-//        if (size < winSize) return false;
-//        int count = 0;
-//        for (int i = 0; i < size; i++) {
-//
-//        }
-//    }
+
+    /**
+     * 监测是否赢了
+     *
+     * @param list
+     * @return
+     */
+    private boolean checkWin(List<Point> list) {
+        for (Point p : list) {
+            int x = p.getX();
+            int y = p.getY();
+            //检测水平方向是否有五个相连的棋子
+            boolean win = checkHorizontal(x, y, list);
+            if (win) return true;
+            //检测垂直方向是否有五个相连的棋子
+            win = checkVertical(x, y, list);
+            if (win) return true;
+            //坚持向左上倾斜是否有五个相连的棋子
+            win = checkSkewLeftUp(x, y, list);
+            if (win) return true;
+            //检测向右上倾斜是否有五个相连的棋子
+            win = checkSkewRightUp(x, y, list);
+            if (win) return true;
+        }
+        return false;
+    }
+
+
+    /**
+     * 检测向右上角倾斜的棋子是否有五个
+     *
+     * @param x
+     * @param y
+     * @param list
+     * @return
+     */
+    private boolean checkSkewRightUp(int x, int y, List<Point> list) {
+        int count = 1;
+        //检测右上是否有五个相连的棋子
+        for (int i = 1; i < WIN_COUNT; i++) {
+            if (list.contains(new Point(x + (int) (i * lineHeight), y + (int) (i * lineHeight)))) {
+                count++;
+            } else {
+                break;
+            }
+        }
+        if (count == WIN_COUNT) return true;
+        //检测左下是否有五个相连的棋子
+        for (int i = 1; i < WIN_COUNT; i++) {
+            if (list.contains(new Point(x - (int) (i * lineHeight), y - (int) (i * lineHeight)))) {
+                count++;
+            } else {
+                break;
+            }
+        }
+        if (count == WIN_COUNT) return true;
+        return false;
+    }
+
+    /**
+     * 监测水平方向是否有连续的五个
+     *
+     * @param list
+     * @return
+     */
+    private boolean checkHorizontal(int x, int y, List<Point> list) {
+        int count = 1;
+        //检测左边
+        for (int i = 1; i < WIN_COUNT; i++) {
+            if (list.contains(new Point(x - (int) (i * lineHeight), y))) {
+                count++;
+            } else {
+                break;
+            }
+        }
+        // 检测右边
+        if (count == WIN_COUNT) return true;
+        for (int i = 1; i < WIN_COUNT; i++) {
+            if (list.contains(new Point(x + (int) (i * lineHeight), y))) {
+                count++;
+            } else {
+                break;
+            }
+        }
+        if (count == WIN_COUNT) return true;
+        return false;
+    }
+
+
+    /**
+     * 检测垂直方向是否有五个连续的
+     *
+     * @param x
+     * @param y
+     * @param list
+     * @return
+     */
+    private boolean checkVertical(int x, int y, List<Point> list) {
+
+        int count = 1;
+        //检测上边是否有五个相连的棋子
+        for (int i = 1; i < WIN_COUNT; i++) {
+            if (list.contains(new Point(x, y - (int) (i * lineHeight)))) {
+                count++;
+            } else {
+                break;
+            }
+        }
+        if (count == WIN_COUNT) return true;
+        //检测下边是否有五个相连的棋子
+        for (int i = 1; i < WIN_COUNT; i++) {
+            if (list.contains(new Point(x, y + (int) (lineHeight * i)))) {
+                count++;
+            } else {
+                break;
+            }
+        }
+        if (count == WIN_COUNT) return true;
+        return false;
+    }
+
+    /**
+     * 检测左边向上倾斜
+     *
+     * @param x
+     * @param y
+     * @param list
+     * @return
+     */
+    private boolean checkSkewLeftUp(int x, int y, List<Point> list) {
+        int count = 1;
+        for (int i = 1; i < WIN_COUNT; i++) {
+            //检测左边
+            if (list.contains(new Point(x - (int) (i * lineHeight), y - (int) (i * lineHeight)))) {
+                count++;
+            } else {
+                break;
+            }
+            if (count == WIN_COUNT) return true;
+            //检测右边
+            if (list.contains(new Point(x + (int) (i * lineHeight), y + (int) (i + lineHeight)))) {
+                count++;
+            } else {
+                break;
+            }
+            if (count == WIN_COUNT) return true;
+        }
+        return false;
+    }
+
+    /**
+     * 赢了回调事件
+     */
+    public interface OnWinCallBack {
+        /**
+         * @param isWhiteWinner 是否是白方胜利
+         */
+        void winListener(boolean isWhiteWinner);
+    }
+
+
+    /**
+     * 在来一把
+     */
+    public void onRestart() {
+        canOperate = true;
+        isCurWhite = true;
+        //清空数据
+        whitePiece.clear();
+        blackPiece.clear();
+        invalidate();
+    }
 }

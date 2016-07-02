@@ -6,6 +6,7 @@
     tools:context="com.wuzhiqi.MainActivity">
 
     <com.wuzhiqi.view.WUZhiQIView
+        android:id="@+id/view_wzp"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
         android:layout_centerInParent="true" />

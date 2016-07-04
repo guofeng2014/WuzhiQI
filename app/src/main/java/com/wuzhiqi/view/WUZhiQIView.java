@@ -250,7 +250,7 @@ public class WUZhiQIView extends View {
         int count = 1;
         //检测右上是否有五个相连的棋子
         for (int i = 1; i < WIN_COUNT; i++) {
-            if (list.contains(new Point(x + (int) (i * lineHeight), y + (int) (i * lineHeight)))) {
+            if (list.contains(new Point(x + (int) (i * lineHeight), y - (int) (i * lineHeight)))) {
                 count++;
             } else {
                 break;
@@ -259,7 +259,7 @@ public class WUZhiQIView extends View {
         if (count == WIN_COUNT) return true;
         //检测左下是否有五个相连的棋子
         for (int i = 1; i < WIN_COUNT; i++) {
-            if (list.contains(new Point(x - (int) (i * lineHeight), y - (int) (i * lineHeight)))) {
+            if (list.contains(new Point(x - (int) (i * lineHeight), y + (int) (i * lineHeight)))) {
                 count++;
             } else {
                 break;
@@ -341,22 +341,24 @@ public class WUZhiQIView extends View {
      */
     private boolean checkSkewLeftUp(int x, int y, List<Point> list) {
         int count = 1;
+        //检测左边
         for (int i = 1; i < WIN_COUNT; i++) {
-            //检测左边
             if (list.contains(new Point(x - (int) (i * lineHeight), y - (int) (i * lineHeight)))) {
                 count++;
             } else {
                 break;
             }
-            if (count == WIN_COUNT) return true;
-            //检测右边
+        }
+        if (count == WIN_COUNT) return true;
+        //检测右边
+        for (int i = 1; i < WIN_COUNT; i++) {
             if (list.contains(new Point(x + (int) (i * lineHeight), y + (int) (i + lineHeight)))) {
                 count++;
             } else {
                 break;
             }
-            if (count == WIN_COUNT) return true;
         }
+        if (count == WIN_COUNT) return true;
         return false;
     }
 
